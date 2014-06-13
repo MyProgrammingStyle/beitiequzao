@@ -436,7 +436,10 @@ int main(int argc,char** argv)
   int deal;
   cout<<"pls ins deal:";
   cin>>deal;
-  rs=core_denoising::search_and_fill(rs,0.95,mean1+deal);
+  float p=0.8;
+  cout<<"pls ins p:";
+  cin>>p;
+  rs=core_denoising::search_and_fill(rs,p,mean1+deal);
   for (i = 1; i < im_gray3.rows-1; i++)
     {
       for (j = 1; j < im_gray3.cols-1; j++)
