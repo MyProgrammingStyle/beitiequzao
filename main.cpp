@@ -1,15 +1,13 @@
 #include<opencv2/opencv.hpp> 
 #include<iostream>
 #include<vector>
-//#include<map>
+#include<list>
 #include<fstream>
 #include<cmath>
-//#include<cstdlib>
-//#include<ctime>
+#include<stack>
 //#define DEBUGING
 //#define HOUGH
 #define SQRT2 1.4142135623730950488016887242097
-//#define PI 3.1415926535897932384626433832795
 using namespace cv;
 using namespace std;
 
@@ -215,79 +213,84 @@ namespace core_denoising
 	}
     return rs;
   }
-  class point{
-  private: int x,y;
-  public:
-    point(int a,int b)
-    {x=a;y=b;}
-    int getx(){return x;}
-    int gety(){return y;}
-  };
-  int p_fill(int x,int y,vector<vector<short>>& a,vector<vector<short>>& b,vector<point>& c)
+int p_fill(int x, int y, vector<vector<short>>& a, vector<vector<short>>& b, int ans, int& size, int& sizep)
+{
+  stack<int,list<int>> xx;
+  stack<int,list<int>> yy;
+  xx.push(x);
+  yy.push(y);
+  while(!xx.empty())
+    {
+      x=xx.top();
+      xx.pop();
+      y=yy.top();
+      yy.pop();
+      b[x][y]=0;
+      size++;
+      if (cul_youchang_90(a, x, y) >= ans)
+	{
+	  sizep++;
+	}
+      else if (cul_youchang_45(a, x, y) >= ans)
+	{
+	  sizep++;
+	}
+      else if (cul_youchang_135(a, x, y) >= ans)
+	{
+	  sizep++;
+	}
+      else if (cul_youchang_0(a, x, y) >= ans)
+	{
+	  sizep++;
+	}
+      if (!((x-1<0) || (y<0) || (x-1 >= a.size()) || (y >= a[0].size()) || (b[x-1][y] == 0)))
+	{
+	  xx.push(x-1);
+	  yy.push(y);
+	}
+      if (!((x+1<0) || (y<0) || (x+1 >= a.size()) || (y >= a[0].size()) || (b[x+1][y] == 0)))
+	{
+	  xx.push(x+1);
+	  yy.push(y);
+	}
+      if (!((x<0) || (y-1<0) || (x >= a.size()) || (y-1 >= a[0].size()) || (b[x][y-1] == 0)))
+	{
+	  xx.push(x);
+	  yy.push(y-1);
+	}
+      if (!((x<0) || (y+1<0) || (x >= a.size()) || (y+1 >= a[0].size()) || (b[x][y+1] == 0)))
+	{
+	  xx.push(x);
+	  yy.push(y+1);
+	}
+    }
+}
+
+  int pure_fill(int x, int y, vector<vector<short>>& a)
   {
-    if((x<0)||(y<0)||(x>=a.size())||(y>=a[0].size())||(b[x][y]==0))
+    if ((x<0) || (y<0) || (x >= a.size()) || (y >= a[0].size()) || (a[x][y] == 0))
       return 1;
-    point xy(x,y);
-    c.push_back(xy);
-    b[x][y]=0;
-    p_fill(x-1,y,a,b,c);
-    p_fill(x+1,y,a,b,c);
-    p_fill(x,y-1,a,b,c);
-    p_fill(x,y+1,a,b,c);
-    return 0;
-  }
-  int pure_fill(int x,int y,vector<vector<short>>& a)
-  {
-    if((x<0)||(y<0)||(x>=a.size())||(y>=a[0].size())||(a[x][y]==0))
-      return 1;
-    a[x][y]=0;
-    pure_fill(x-1,y,a);
-    pure_fill(x+1,y,a);
-    pure_fill(x,y-1,a);
-    pure_fill(x,y+1,a);
+    a[x][y] = 0;
+    pure_fill(x - 1, y, a);
+    pure_fill(x + 1, y, a);
+    pure_fill(x, y - 1, a);
+    pure_fill(x, y + 1, a);
     return 0;
   }
   vector<vector<short>>
-  search_and_fill(vector<vector<short>> a,float p,int ans)
+  search_and_fill(vector<vector<short>> a, float p, int ans)
   {
-    float k=0;
-    vector<point> c;
-    vector<vector<short>> b=a;
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a[0].size();j++)
+    int size, sizep;
+    float k = 0;
+    vector<vector<short>> b = a;
+    for (int i = 0; i<a.size(); i++)
+      for (int j = 0; j<a[0].size(); j++)
 	{
-	  if((a[i][j]==1)&&(b[i][j]==1))
-	    p_fill(i,j,a,b,c);
-	  for(auto s:c)
-	    {
-
-	      if (cul_youchang_90(a, s.getx(), s.gety()) >= ans)
-		{
-		  k++;
-		  continue;
-		}
-	      if (cul_youchang_45(a, s.getx(), s.gety()) >= ans)
-		{
-		  k++;
-		  continue;
-		}
-	      if (cul_youchang_135(a, s.getx(), s.gety()) >= ans)
-		{
-		  k++;
-		  continue;
-		}
-	      if (cul_youchang_0(a, s.getx(), s.gety()) >= ans)
-		{
-		  k++;
-		  continue;
-		}
-		
-	    }
-	  if(k/c.size()<p)
-	    pure_fill(i,j,a);
-	  c.clear();
-	  k=0;
-
+	  size = 0, sizep = 0;
+	  if ((a[i][j] == 1) && (b[i][j] == 1))
+	    p_fill(i, j, a, b, ans,size,sizep);
+	  if ((float)sizep/size<p)
+	    pure_fill(i, j, a);
 	}
     return a;
   }
@@ -348,16 +351,16 @@ Mat tv_denoising(Mat img, int iter = 50)
 	int tmp_j1 = (j + 1)<nx ? (j + 1) : (nx - 1);
 	int tmp_i2 = (i - 1) > -1 ? (i - 1) : 0;
 	int tmp_j2 = (j - 1) > -1 ? (j - 1) : 0;
-	double tmp_x = (image[i][tmp_j1] - image[i][tmp_j2]) / 2; 
-	double tmp_y = (image[tmp_i1][j] - image[tmp_i2][j]) / 2; 
-	double tmp_xx = image[i][tmp_j1] + image[i][tmp_j2] - image[i][j] * 2;  
-	double tmp_yy = image[tmp_i1][j] + image[tmp_i2][j] - image[i][j] * 2; 
+	double tmp_x = (image[i][tmp_j1] - image[i][tmp_j2]) / 2;
+	double tmp_y = (image[tmp_i1][j] - image[tmp_i2][j]) / 2;
+	double tmp_xx = image[i][tmp_j1] + image[i][tmp_j2] - image[i][j] * 2;
+	double tmp_yy = image[tmp_i1][j] + image[tmp_i2][j] - image[i][j] * 2;
 	double tmp_dp = image[tmp_i1][tmp_j1] + image[tmp_i2][tmp_j2];
 	double tmp_dm = image[tmp_i2][tmp_j1] + image[tmp_i1][tmp_j2];
-	double tmp_xy = (tmp_dp - tmp_dm) / 4; 
+	double tmp_xy = (tmp_dp - tmp_dm) / 4;
 	double tmp_num = tmp_xx*(tmp_y*tmp_y + ep2)
-	  - 2 * tmp_x*tmp_y*tmp_xy + tmp_yy*(tmp_x*tmp_x + ep2);  
-	double tmp_den = pow((tmp_x*tmp_x + tmp_y*tmp_y + ep2), 1.5);  
+	  - 2 * tmp_x*tmp_y*tmp_xy + tmp_yy*(tmp_x*tmp_x + ep2);
+	double tmp_den = pow((tmp_x*tmp_x + tmp_y*tmp_y + ep2), 1.5);
 	image[i][j] += dt*(tmp_num / tmp_den + lam*(image0[i][j] - image[i][j]));
       }
     }
@@ -380,11 +383,11 @@ Mat tv_denoising(Mat img, int iter = 50)
   deleteDoubleMatrix(image, nx, ny);
   return new_img;
 
-   }
-int main(int argc,char** argv)
+}
+int main(int argc, char** argv)
 {
   Mat im_gray = imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
-  cout<<"TV denoising..."<<endl;
+  cout << "TV denoising..." << endl;
 #ifdef DEBUGING
   Mat im_gray2 = tv_denoising(im_gray, 1);
 #else
@@ -392,7 +395,7 @@ int main(int argc,char** argv)
 #endif
   Mat im_gray3;
   int i, j;
-  cout<<"Thresholding..."<<endl;
+  cout << "Thresholding..." << endl;
   threshold(im_gray2, im_gray3, 128, 255, CV_THRESH_OTSU);
   //  cvNamedWindow("lena1", CV_WINDOW_AUTOSIZE);
   cvNamedWindow("lena2", CV_WINDOW_AUTOSIZE);
@@ -400,7 +403,7 @@ int main(int argc,char** argv)
   //cvShowImage("lena", src);
   // imshow("lena3", im_gray);
   //imshow("lena1", im_gray2);
-  cout<<"Count..."<<endl;
+  cout << "Count..." << endl;
   vector<vector<short>> rs(im_gray3.rows);
   for (auto& i : rs)
     i.resize(im_gray3.cols);
@@ -410,11 +413,11 @@ int main(int argc,char** argv)
 	rs[i][j] = (int)((bool)im_gray3.ptr(i)[j]);
     }
   vector<int> ansss = core_denoising::youchang(rs);
-  
+
   int nsamples = ansss.size();
   int ncluster = 2;
   Mat samples(ansss);
-  cout<<"Analysing... "<<endl;
+  cout << "Analysing... " << endl;
   EM em_model = EM(ncluster, EM::COV_MAT_SPHERICAL);
 
   if (!em_model.train(samples)) {
@@ -434,21 +437,21 @@ int main(int argc,char** argv)
   if (mean1<mean2)
     mean1 = mean2;
   int deal;
-  cout<<"pls ins deal:";
-  cin>>deal;
-  float p=0.8;
-  cout<<"pls ins p:";
-  cin>>p;
-  rs=core_denoising::search_and_fill(rs,p,mean1+deal);
-  for (i = 1; i < im_gray3.rows-1; i++)
+  cout << "pls ins deal:";
+  cin >> deal;
+  float p = 0.8;
+  cout << "pls ins p:";
+  cin >> p;
+  rs = core_denoising::search_and_fill(rs, p, mean1 + deal);
+  for (i = 1; i < im_gray3.rows - 1; i++)
     {
-      for (j = 1; j < im_gray3.cols-1; j++)
+      for (j = 1; j < im_gray3.cols - 1; j++)
 	{
-	  if(rs[i-1][j]==rs[i+1][j])
-	    rs[i][j]=rs[i-1][j];
-	  if(rs[i][j-1]==rs[i][j+1])
-	    rs[i][j]=rs[i][j-1];
-	  im_gray3.ptr(i)[j] = 255*rs[i][j] ;
+	  if (rs[i - 1][j] == rs[i + 1][j])
+	    rs[i][j] = rs[i - 1][j];
+	  if (rs[i][j - 1] == rs[i][j + 1])
+	    rs[i][j] = rs[i][j - 1];
+	  im_gray3.ptr(i)[j] = 255 * rs[i][j];
 	}
     }
 
@@ -456,33 +459,33 @@ int main(int argc,char** argv)
 
   vector<Vec4i> lines;
 #ifdef HOUGH
-  HoughLinesP(im_gray3, lines, 1, CV_PI/180, 1000, 3, 0 );
-  for( size_t i = 0; i < lines.size(); i++ )
+  HoughLinesP(im_gray3, lines, 1, CV_PI / 180, 1000, 3, 0);
+  for (size_t i = 0; i < lines.size(); i++)
     {
       Vec4i l = lines[i];
-      line( im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,0,0), 3, CV_AA);
+      line(im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 3, CV_AA);
     }
-  HoughLinesP(im_gray3, lines, 1, CV_PI/45, 1000, 3, 0 );
-  for( size_t i = 0; i < lines.size(); i++ )
+  HoughLinesP(im_gray3, lines, 1, CV_PI / 45, 1000, 3, 0);
+  for (size_t i = 0; i < lines.size(); i++)
     {
       Vec4i l = lines[i];
-      line( im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,0,0), 3, CV_AA);
+      line(im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 3, CV_AA);
     }
-  HoughLinesP(im_gray3, lines, 1, CV_PI/90, 1000, 3, 0 );
-  for( size_t i = 0; i < lines.size(); i++ )
+  HoughLinesP(im_gray3, lines, 1, CV_PI / 90, 1000, 3, 0);
+  for (size_t i = 0; i < lines.size(); i++)
     {
       Vec4i l = lines[i];
-      line( im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,0,0), 3, CV_AA);
+      line(im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 3, CV_AA);
     }
-  HoughLinesP(im_gray3, lines, 1, CV_PI/135, 1000, 3, 0 );
-  for( size_t i = 0; i < lines.size(); i++ )
+  HoughLinesP(im_gray3, lines, 1, CV_PI / 135, 1000, 3, 0);
+  for (size_t i = 0; i < lines.size(); i++)
     {
       Vec4i l = lines[i];
-      line( im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,0,0), 3, CV_AA);
+      line(im_gray3, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255, 0, 0), 3, CV_AA);
     }
 #endif
   imshow("lena2", im_gray3);
-  imwrite(argv[2],im_gray3);
+  imwrite(argv[2], im_gray3);
   cvWaitKey(0);
   cvDestroyWindow("lena");
 }
