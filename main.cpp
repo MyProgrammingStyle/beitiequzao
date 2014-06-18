@@ -415,13 +415,6 @@ int main(int argc, char** argv)
 	rs[i][j] = (int)((bool)im_gray3.ptr(i)[j]);
     }
   vector<int> ansss = core_denoising::youchang(rs);
-  ofstream eng;
-  eng.open("cc.txt");
-  cout<<"33333";
-  int i3,j3;
-  cin>>i3>>j3;
-  for(auto sssss:ansss)
-    {if((sssss>=i3)&&(sssss<=j3)){ eng<<sssss<<" ";}}
   int nsamples = ansss.size();
   int ncluster = 2;
   Mat samples(ansss);
