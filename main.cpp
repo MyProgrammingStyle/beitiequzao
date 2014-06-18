@@ -13,7 +13,7 @@ using namespace std;
 
 namespace core_denoising
 {
-  inline int cul_youchang_0(const vector<vector<short>>& source, int col, int row)
+  inline float cul_youchang_0(const vector<vector<short>>& source, int col, int row)
   {
     int i = 0, j = 0;
     while ((col - 1 - i >= 0) && (source[col - i - 1][row] != 0))
@@ -22,7 +22,7 @@ namespace core_denoising
       j++;
     return i + j + 1;
   }
-  inline int cul_youchang_45(const vector<vector<short>>& source, int col, int row)
+  inline float cul_youchang_45(const vector<vector<short>>& source, int col, int row)
 
   {
     int i = 0, j = 0;
@@ -32,7 +32,7 @@ namespace core_denoising
       j++;
     return (i + j + 1) * SQRT2;
   }
-  inline int cul_youchang_90(const vector<vector<short>>& source, int col, int row)
+  inline float cul_youchang_90(const vector<vector<short>>& source, int col, int row)
   {
     int i = 0, j = 0;
     while ((row - 1 - i >= 0) && (source[col][row - i - 1] != 0))
@@ -41,7 +41,7 @@ namespace core_denoising
       j++;
     return i + j + 1;
   }
-  inline int cul_youchang_135(const vector<vector<short>>& source, int col, int row)
+  inline float cul_youchang_135(const vector<vector<short>>& source, int col, int row)
   {
     int i = 0, j = 0;
     while ((row - 1 - i >= 0) && (col - 1 - i >= 0) && (source[col - i - 1][row - i - 1] != 0))
@@ -288,9 +288,11 @@ int p_fill(int x, int y, vector<vector<short>>& a, vector<vector<short>>& b, int
 	{
 	  size = 0, sizep = 0;
 	  if ((a[i][j] == 1) && (b[i][j] == 1))
-	    p_fill(i, j, a, b, ans,size,sizep);
-	  if ((float)sizep/size<p)
-	    pure_fill(i, j, a);
+	    {
+	      p_fill(i, j, a, b, ans,size,sizep);
+	      if ((float)sizep/size<p)
+		pure_fill(i, j, a);
+	    }
 	}
     return a;
   }
@@ -413,7 +415,13 @@ int main(int argc, char** argv)
 	rs[i][j] = (int)((bool)im_gray3.ptr(i)[j]);
     }
   vector<int> ansss = core_denoising::youchang(rs);
-
+  ofstream eng;
+  eng.open("cc.txt");
+  cout<<"33333";
+  int i3,j3;
+  cin>>i3>>j3;
+  for(auto sssss:ansss)
+    {if((sssss>=i3)&&(sssss<=j3)){ eng<<sssss<<" ";}}
   int nsamples = ansss.size();
   int ncluster = 2;
   Mat samples(ansss);
