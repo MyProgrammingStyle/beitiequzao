@@ -6,7 +6,7 @@ beitiequzao
 
 使用方法
 :
-beitiequzao inputpicuter outputpicuter
+beitiequzao inputimage outputimage
 
 编译方法
 
